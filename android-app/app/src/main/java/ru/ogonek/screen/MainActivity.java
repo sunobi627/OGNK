@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebResourceError;
@@ -147,13 +146,6 @@ public class MainActivity extends Activity {
         }
 
         builder.show();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        // Disable back button
-        if (keyCode == KeyEvent.KEYCODE_BACK) return true;
-        return super.onKeyDown(keyCode, event);
     }
 
     @Override
