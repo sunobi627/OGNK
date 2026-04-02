@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Огонёк — Добро пожаловать</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    height: 100vh;
+    overflow: hidden;
+    color: white;
+  }
+
+  /* ── Video background ── */
+  .bg-video {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+  .bg-video.loaded { opacity: 1; }
+
+  /* ── Gradient overlay ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.15) 0%,
+      rgba(0,0,0,0.05) 40%,
+      rgba(0,0,0,0.55) 70%,
+      rgba(0,0,0,0.85) 100%
+    );
+    z-index: 1;
+  }
+
+  /* ── Info panel at bottom ── */
+  .info {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 32px 48px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .property {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 8px;
+  }
+
+  .greeting {
+    font-size: 18px;
+    font-weight: 300;
+    opacity: 0.75;
+  }
+
+  .guest-name {
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  .dates {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  .date-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .date-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.45;
+  }
+
+  .date-value {
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  .date-sep {
+    align-self: center;
+    opacity: 0.3;
+    font-size: 20px;
+    margin-top: 14px;
+  }
+
+  .phone {
+    font-size: 14px;
+    opacity: 0.45;
+  }
+
+  .phone span {
+    color: #ffd700;
+    opacity: 1;
+    font-weight: 500;
+  }
+
+  /* ── No guest state ── */
+  .no-guest {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .no-guest .logo { font-size: 56px; }
+  .no-guest .prop { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.4; }
+  .no-guest .name { font-size: 22px; opacity: 0.6; margin-top: 8px; }
+  .no-guest .empty { font-size: 14px; opacity: 0.3; margin-top: 4px; }
+
+  /* ── Loading ── */
+  .loading {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    opacity: 0.4;
+  }
+</style>
+</head>
+<body>
+
+<video
+  class="bg-video"
+  id="bgVideo"
+  src="https://assets.mixkit.co/videos/11145/11145-720.mp4"
+  autoplay
+  muted
+  loop
+  playsinline
+></video>
+
+<div class="overlay"></div>
+
+<div id="content">
+  <div class="loading">Загрузка...</div>
+</div>
+
+<script>
+const cottageId = location.pathname.split('/').pop() || 1;
+
+// Fade in video once it starts playing
+const vid = document.getElementById('bgVideo');
+vid.addEventListener('canplay', () => vid.classList.add('loaded'));
+
+async function load() {
+  try {
+    const r = await fetch(`/api/cottage/${cottageId}/current-guest`);
+    const d = await r.json();
+    render(d);
+  } catch(e) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading">Ошибка загрузки</div>';
+  }
+}
+
+function fmt(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, day] = dateStr.split('-');
+  return `${day}.${m}.${y}`;
+}
+
+function render(d) {
+  const el = document.getElementById('content');
+
+  if (!d.has_guest) {
+    el.innerHTML = `
+      <div class="no-guest">
+        <div class="logo">🔥</div>
+        <div class="prop">OGON&#203;K</div>
+        <div class="name">${d.cottage_name}</div>
+        <div class="empty">Свободно</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="info">
+      <div class="property">OGON&#203;K</div>
+      <div class="greeting">Добро пожаловать,</div>
+      <div class="guest-name">${d.guest_name}</div>
+      <div class="dates">
+        <div class="date-item">
+          <div class="date-label">Заезд</div>
+          <div class="date-value">${fmt(d.checkin)}</div>
+        </div>
+        <div class="date-sep">→</div>
+        <div class="date-item">
+          <div class="date-label">Выезд</div>
+          <div class="date-value">${fmt(d.checkout)}</div>
+        </div>
+      </div>
+      <div class="phone">Нужна помощь? <span>${d.phone}</span></div>
+    </div>`;
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
