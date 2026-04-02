@@ -8,19 +8,15 @@ android {
 
     defaultConfig {
         applicationId "ru.ogonek.screen"
-        minSdk 21
+        minSdk 23
         targetSdk 34
         versionCode 1
         versionName "1.0"
     }
 
     buildTypes {
-        release {
-            minifyEnabled false
-        }
-        debug {
-            applicationIdSuffix ".debug"
-        }
+        release { minifyEnabled false }
+        debug {}
     }
 
     compileOptions {
@@ -29,6 +25,4 @@ android {
     }
 }
 
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-}
+dependencies {}
