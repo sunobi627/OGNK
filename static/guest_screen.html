@@ -62,7 +62,7 @@ const cottageId = location.pathname.split('/').pop() || 1;
 const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast' +
   '?latitude=56.34&longitude=37.52' +
   '&daily=temperature_2m_max,temperature_2m_min,weathercode' +
-  '&timezone=Europe%2FMoscow&forecast_days=2';
+  '&timezone=Europe%2FMoscow&forecast_days=3';
 
 function weatherIcon(code) {
   if (code === 0)                        return '☀️';
@@ -103,8 +103,9 @@ async function loadWeather() {
     const d    = data.daily;
 
     const days = [
-      { label: 'Сегодня', i: 0 },
-      { label: 'Завтра',  i: 1 }
+      { label: 'Сегодня',       i: 0 },
+      { label: 'Завтра',        i: 1 },
+      { label: 'Послезавтра',   i: 2 }
     ];
 
     const html = days.map(({ label, i }) => {
