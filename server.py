@@ -80,6 +80,7 @@ def require_admin(x_admin_token: str | None = Header(default=None)):
 # ── Bnovo ────────────────────────────────────────────────────────────────────
 jwt_token = ""
 current_guests: dict = {i: None for i in range(1, 7)}
+device_last_seen: dict = {}  # cottage_id -> datetime
 
 
 async def get_jwt_token() -> str:
@@ -273,6 +274,29 @@ async def api_status():
 async def api_sync():
     await sync_bnovo()
     return {"ok": True}
+
+
+@app.post("/api/heartbeat/{cottage_id}")
+async def heartbeat(cottage_id: int):
+    device_last_seen[cottage_id] = datetime.now()
+    return {"ok": True}
+
+
+@app.get("/api/admin/devices")
+async def admin_devices(_=Depends(require_admin)):
+    s = get_settings()
+    now = datetime.now()
+    result = {}
+    for i in range(1, 7):
+        last = device_last_seen.get(i)
+        online = last is not None and (now - last).total_seconds() < 120
+        result[str(i)] = {
+            "name":        s["cottages"].get(str(i), {}).get("name", f"Домик {i}"),
+            "online":      online,
+            "last_seen":   last.isoformat() if last else None,
+            "seconds_ago": int((now - last).total_seconds()) if last else None,
+        }
+    return result
 
 
 # ── Admin API ─────────────────────────────────────────────────────────────────

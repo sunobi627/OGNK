@@ -203,13 +203,19 @@ function render(d, s) {
     </div>`;
 }
 
+async function sendHeartbeat() {
+  try { await fetch(`/api/heartbeat/${cottageId}`, {method: 'POST'}); } catch(e) {}
+}
+
 // Загружаем всё параллельно
 loadAll();
 loadWeather();
+sendHeartbeat();
 
-// Обновляем гостя каждую минуту, погоду каждые 30 минут
+// Обновляем гостя каждую минуту, погоду каждые 30 минут, хартбит каждые 30 сек
 setInterval(loadAll, 60000);
 setInterval(loadWeather, 30 * 60 * 1000);
+setInterval(sendHeartbeat, 30000);
 </script>
 </body>
 </html>

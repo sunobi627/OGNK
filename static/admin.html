@@ -164,6 +164,22 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .toast.ok { border-left: 3px solid #5cb85c; }
 .toast.err { border-left: 3px solid var(--danger); }
 
+/* ── Devices tab ── */
+.device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.device-card {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 14px;
+}
+.device-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.device-dot.online  { background: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.6); }
+.device-dot.offline { background: #555; }
+.device-info { flex: 1; }
+.device-name { font-size: 14px; font-weight: 500; }
+.device-status { font-size: 12px; margin-top: 2px; }
+.device-status.online  { color: #4caf50; }
+.device-status.offline { color: var(--muted); }
+.devices-updated { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
 /* ── Tab panels ── */
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
@@ -196,6 +212,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
     <div class="tab" onclick="switchTab('text', this)">✏️ Текст</div>
     <div class="tab" onclick="switchTab('cottages', this)">🏠 Домики</div>
     <div class="tab" onclick="switchTab('preview', this)">👁 Предпросмотр</div>
+    <div class="tab" onclick="switchTab('devices', this)">📡 Устройства</div>
     <div class="tab" onclick="switchTab('security', this)">🔐 Пароль</div>
   </div>
 
@@ -280,6 +297,15 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
         <div class="preview-frame">
           <iframe id="previewFrame" src="/screen/1"></iframe>
         </div>
+      </div>
+    </div>
+
+    <!-- DEVICES -->
+    <div class="tab-panel" id="panel-devices">
+      <div class="card">
+        <div class="card-title">Статус устройств</div>
+        <div class="devices-updated" id="devicesUpdated">Загрузка...</div>
+        <div class="device-grid" id="deviceGrid"></div>
       </div>
     </div>
 
@@ -376,6 +402,44 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'devices') loadDevices();
+}
+
+// ── Devices ───────────────────────────────────────────────────────────────────
+async function loadDevices() {
+  try {
+    const r = await authFetch('/api/admin/devices');
+    const devices = await r.json();
+    const grid = document.getElementById('deviceGrid');
+    const now = new Date();
+    document.getElementById('devicesUpdated').textContent =
+      'Обновлено: ' + now.toLocaleTimeString('ru-RU');
+
+    grid.innerHTML = Object.entries(devices).map(([id, d]) => {
+      const statusText = d.online
+        ? 'Онлайн'
+        : d.last_seen
+          ? `Был(а) ${formatAgo(d.seconds_ago)} назад`
+          : 'Не подключалось';
+      return `
+        <div class="device-card">
+          <div class="device-dot ${d.online ? 'online' : 'offline'}"></div>
+          <div class="device-info">
+            <div class="device-name">🏠 ${d.name}</div>
+            <div class="device-status ${d.online ? 'online' : 'offline'}">${statusText}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('deviceGrid').innerHTML =
+      '<div style="color:var(--muted);font-size:13px">Ошибка загрузки</div>';
+  }
+}
+
+function formatAgo(seconds) {
+  if (seconds < 60)   return `${seconds} сек`;
+  if (seconds < 3600) return `${Math.floor(seconds/60)} мин`;
+  return `${Math.floor(seconds/3600)} ч`;
 }
 
 // ── Background ────────────────────────────────────────────────────────────────
