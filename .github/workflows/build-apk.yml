@@ -19,14 +19,27 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Create local.properties
+        working-directory: android-app
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.4'
+
+      - name: Make gradlew executable
+        working-directory: android-app
+        run: chmod +x gradlew 2>/dev/null || true
 
       - name: Build Debug APK
         working-directory: android-app
-        run: gradle :app:assembleDebug --no-daemon
+        run: |
+          gradle :app:assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            -Pandroid.useAndroidX=true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
