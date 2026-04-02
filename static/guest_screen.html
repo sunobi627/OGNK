@@ -16,6 +16,16 @@
 
   .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.85) 100%); z-index: 1; }
 
+  /* Погода — правый верхний угол */
+  .weather { position: fixed; top: 36px; right: 48px; z-index: 2; display: flex; gap: 16px; align-items: flex-start; }
+  .weather-day { text-align: center; background: rgba(0,0,0,0.25); backdrop-filter: blur(10px); border-radius: 16px; padding: 14px 20px; min-width: 90px; }
+  .weather-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.45; margin-bottom: 6px; }
+  .weather-icon { font-size: 32px; line-height: 1; margin-bottom: 4px; }
+  .weather-temp { font-size: 22px; font-weight: 600; }
+  .weather-range { font-size: 12px; opacity: 0.5; margin-top: 2px; }
+  .weather-desc { font-size: 11px; opacity: 0.55; margin-top: 4px; line-height: 1.3; }
+
+  /* Гость — левый нижний угол */
   .info { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2; padding: 32px 48px 44px; }
   .property { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.5; margin-bottom: 8px; }
   .greeting { font-size: 18px; font-weight: 300; opacity: 0.75; }
@@ -42,10 +52,83 @@
 <video class="bg-video" id="bgVideo" autoplay muted loop playsinline></video>
 <div class="bg-image" id="bgImage"></div>
 <div class="overlay"></div>
+<div id="weather"></div>
 <div id="content"><div class="loading">Загрузка...</div></div>
 
 <script>
 const cottageId = location.pathname.split('/').pop() || 1;
+
+// Координаты Дмитровского района Подмосковья
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast' +
+  '?latitude=56.34&longitude=37.52' +
+  '&daily=temperature_2m_max,temperature_2m_min,weathercode' +
+  '&timezone=Europe%2FMoscow&forecast_days=2';
+
+function weatherIcon(code) {
+  if (code === 0)                        return '☀️';
+  if (code === 1)                        return '🌤️';
+  if (code === 2)                        return '⛅';
+  if (code === 3)                        return '☁️';
+  if ([45,48].includes(code))            return '🌫️';
+  if ([51,53,55].includes(code))         return '🌦️';
+  if ([61,63,65].includes(code))         return '🌧️';
+  if ([66,67].includes(code))            return '🌨️';
+  if ([71,73,75,77].includes(code))      return '❄️';
+  if ([80,81,82].includes(code))         return '🌦️';
+  if ([85,86].includes(code))            return '🌨️';
+  if ([95,96,99].includes(code))         return '⛈️';
+  return '🌡️';
+}
+
+function weatherDesc(code) {
+  if (code === 0)                        return 'Ясно';
+  if (code === 1)                        return 'Преим. ясно';
+  if (code === 2)                        return 'Переменная\nоблачность';
+  if (code === 3)                        return 'Пасмурно';
+  if ([45,48].includes(code))            return 'Туман';
+  if ([51,53,55].includes(code))         return 'Морось';
+  if ([61,63,65].includes(code))         return 'Дождь';
+  if ([66,67].includes(code))            return 'Ледяной дождь';
+  if ([71,73,75,77].includes(code))      return 'Снег';
+  if ([80,81,82].includes(code))         return 'Ливень';
+  if ([85,86].includes(code))            return 'Снегопад';
+  if ([95,96,99].includes(code))         return 'Гроза';
+  return '';
+}
+
+async function loadWeather() {
+  try {
+    const res  = await fetch(WEATHER_URL);
+    const data = await res.json();
+    const d    = data.daily;
+
+    const days = [
+      { label: 'Сегодня', i: 0 },
+      { label: 'Завтра',  i: 1 }
+    ];
+
+    const html = days.map(({ label, i }) => {
+      const max  = Math.round(d.temperature_2m_max[i]);
+      const min  = Math.round(d.temperature_2m_min[i]);
+      const code = d.weathercode[i];
+      const avg  = Math.round((max + min) / 2);
+      const sign = avg >= 0 ? '+' : '';
+      return `
+        <div class="weather-day">
+          <div class="weather-label">${label}</div>
+          <div class="weather-icon">${weatherIcon(code)}</div>
+          <div class="weather-temp">${sign}${avg}°</div>
+          <div class="weather-range">${min > 0 ? '+' : ''}${min}° / ${max > 0 ? '+' : ''}${max}°</div>
+          <div class="weather-desc">${weatherDesc(code)}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('weather').innerHTML =
+      `<div class="weather">${html}</div>`;
+  } catch(e) {
+    // Погода не загрузилась — ничего не показываем, не критично
+  }
+}
 
 async function loadAll() {
   try {
@@ -119,8 +202,13 @@ function render(d, s) {
     </div>`;
 }
 
+// Загружаем всё параллельно
 loadAll();
+loadWeather();
+
+// Обновляем гостя каждую минуту, погоду каждые 30 минут
 setInterval(loadAll, 60000);
+setInterval(loadWeather, 30 * 60 * 1000);
 </script>
 </body>
 </html>
