@@ -1,0 +1,17 @@
+{
+  "property_name": "Огонёк",
+  "greeting_text": "Добро пожаловать,",
+  "support_phone": "+7 985 883-33-54",
+  "background_type": "video",
+  "background_url": "https://assets.mixkit.co/videos/11145/11145-720.mp4",
+  "background_file": null,
+  "cottages": {
+    "1": {"name": "Дом Гармонии",    "wifi_name": "ogonek", "wifi_pass": "ognk24"},
+    "2": {"name": "Дом Нежности",    "wifi_name": "ogonek", "wifi_pass": "ognk24"},
+    "3": {"name": "Дом Радости",     "wifi_name": "ogonek", "wifi_pass": "ognk24"},
+    "4": {"name": "Дом Бодрости",    "wifi_name": "ogonek", "wifi_pass": "ognk24"},
+    "5": {"name": "Дом Спокойствия", "wifi_name": "ogonek", "wifi_pass": "ognk24"},
+    "6": {"name": "Дом Энергии",     "wifi_name": "ogonek", "wifi_pass": "ognk24"}
+  },
+  "admin_password_hash": "637d69bcefc583f49f5274bf027214232b7747536004408d5835d5350a7199a5"
+}

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OGONËK — Админ</title>
+<style>
+:root {
+  --bg:     #0f0f13;
+  --card:   #1a1a24;
+  --border: rgba(255,255,255,0.08);
+  --gold:   #ffd700;
+  --text:   #e8e8f0;
+  --muted:  rgba(255,255,255,0.4);
+  --accent: #7c6af7;
+  --danger: #e05c5c;
+  --radius: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+/* ── Login ── */
+#loginScreen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+}
+.login-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+  padding: 48px 40px; width: 100%; max-width: 380px; text-align: center;
+}
+.login-logo { font-size: 48px; margin-bottom: 8px; }
+.login-brand { font-size: 12px; letter-spacing: 4px; opacity: 0.4; margin-bottom: 32px; }
+.login-title { font-size: 22px; font-weight: 600; margin-bottom: 24px; }
+.login-card input {
+  width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 16px; outline: none; margin-bottom: 12px;
+}
+.login-card input:focus { border-color: var(--accent); }
+.btn-primary {
+  width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 10px;
+  color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.85; }
+.login-error { color: var(--danger); font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+/* ── Main layout ── */
+#mainScreen { display: none; }
+.topbar {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 60px;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-logo { font-size: 13px; letter-spacing: 3px; font-weight: 600; color: var(--gold); }
+.topbar-spacer { flex: 1; }
+.topbar-logout {
+  background: none; border: 1px solid var(--border); border-radius: 8px;
+  color: var(--muted); font-size: 13px; padding: 6px 14px; cursor: pointer;
+}
+.topbar-logout:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+.tabs { display: flex; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--card); }
+.tab {
+  padding: 14px 20px; font-size: 14px; cursor: pointer; color: var(--muted);
+  border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); }
+
+.content { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+}
+.card-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+.card-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+/* ── Form elements ── */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 6px; text-transform: uppercase; }
+.field input, .field textarea {
+  width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 80px; }
+
+.btn {
+  padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  cursor: pointer; border: none; transition: all 0.2s;
+}
+.btn-save { background: var(--accent); color: white; }
+.btn-save:hover { opacity: 0.85; }
+.btn-danger { background: rgba(224,92,92,0.15); color: var(--danger); border: 1px solid rgba(224,92,92,0.3); }
+.btn-danger:hover { background: rgba(224,92,92,0.25); }
+.btn-ghost { background: rgba(255,255,255,0.06); color: var(--text); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+/* ── Background tab ── */
+.bg-preview {
+  width: 100%; height: 200px; border-radius: 10px; overflow: hidden;
+  background: #000; position: relative; margin-bottom: 20px;
+}
+.bg-preview video, .bg-preview img { width: 100%; height: 100%; object-fit: cover; }
+.bg-preview .bg-label {
+  position: absolute; bottom: 10px; left: 12px; font-size: 11px;
+  background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 6px; color: var(--muted);
+}
+
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: 10px; padding: 32px;
+  text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(124,106,247,0.05); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-text { font-size: 14px; color: var(--muted); }
+.upload-hint { font-size: 12px; color: var(--muted); opacity: 0.6; margin-top: 4px; }
+
+.progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 12px; display: none; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; width: 0; }
+
+.files-list { display: flex; flex-direction: column; gap: 8px; }
+.file-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid var(--border);
+}
+.file-thumb { width: 48px; height: 32px; object-fit: cover; border-radius: 4px; background: #000; }
+.file-name { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-size { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.file-active { font-size: 11px; background: rgba(124,106,247,0.2); color: var(--accent); padding: 2px 8px; border-radius: 10px; }
+
+.toggle-group { display: flex; gap: 8px; margin-bottom: 16px; }
+.toggle-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); background: none; color: var(--muted); }
+.toggle-btn.active { background: rgba(124,106,247,0.2); color: var(--accent); border-color: var(--accent); }
+
+/* ── Cottages tab ── */
+.cottage-grid { display: grid; gap: 16px; }
+.cottage-card {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+.cottage-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cottage-num { width: 28px; height: 28px; background: rgba(124,106,247,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--accent); }
+.cottage-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+@media(max-width:600px){ .cottage-inputs { grid-template-columns: 1fr; } }
+
+/* ── Preview tab ── */
+.preview-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.preview-controls select {
+  padding: 8px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
+}
+.preview-frame { width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.preview-frame iframe { width: 100%; height: 70vh; border: none; display: block; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; background: #2a2a38; border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 20px; font-size: 14px; z-index: 999;
+  transform: translateY(80px); opacity: 0; transition: all 0.3s; pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-left: 3px solid #5cb85c; }
+.toast.err { border-left: 3px solid var(--danger); }
+
+/* ── Tab panels ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🔥</div>
+    <div class="login-brand">OGONËK</div>
+    <div class="login-title">Панель управления</div>
+    <input type="password" id="loginPass" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-primary" onclick="doLogin()">Войти</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainScreen">
+  <div class="topbar">
+    <div class="topbar-logo">OGONËK</div>
+    <div class="topbar-spacer"></div>
+    <button class="topbar-logout" onclick="logout()">Выйти</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('background', this)">🎬 Фон</div>
+    <div class="tab" onclick="switchTab('text', this)">✏️ Текст</div>
+    <div class="tab" onclick="switchTab('cottages', this)">🏠 Домики</div>
+    <div class="tab" onclick="switchTab('preview', this)">👁 Предпросмотр</div>
+    <div class="tab" onclick="switchTab('security', this)">🔐 Пароль</div>
+  </div>
+
+  <div class="content">
+
+    <!-- BACKGROUND -->
+    <div class="tab-panel active" id="panel-background">
+      <div class="card">
+        <div class="card-title">Текущий фон</div>
+        <div class="bg-preview" id="bgPreview">
+          <div class="bg-label" id="bgLabel">Загрузка...</div>
+        </div>
+
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="modeVideoBtn" onclick="setMode('video')">Видео</button>
+          <button class="toggle-btn" id="modeImageBtn" onclick="setMode('image')">Фото</button>
+          <button class="toggle-btn" id="modeUrlBtn" onclick="setMode('url')">URL ссылка</button>
+        </div>
+
+        <div id="uploadSection">
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" onchange="uploadFile(this.files[0])">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Нажмите или перетащите файл</div>
+            <div class="upload-hint">MP4, WebM, JPG, PNG, WebP — до 200 МБ</div>
+          </div>
+          <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <div id="urlSection" style="display:none">
+          <div class="field">
+            <label>URL видео или изображения</label>
+            <input type="url" id="bgUrlInput" placeholder="https://...">
+          </div>
+          <button class="btn btn-save" onclick="saveBgUrl()">Применить</button>
+        </div>
+      </div>
+
+      <div class="card" id="filesCard">
+        <div class="card-title">Загруженные файлы</div>
+        <div class="files-list" id="filesList"><div style="color:var(--muted);font-size:13px">Нет файлов</div></div>
+      </div>
+    </div>
+
+    <!-- TEXT -->
+    <div class="tab-panel" id="panel-text">
+      <div class="card">
+        <div class="card-title">Настройки текста</div>
+        <div class="field"><label>Название базы отдыха</label><input type="text" id="propName"></div>
+        <div class="field"><label>Приветствие (перед именем гостя)</label><input type="text" id="greetingText"></div>
+        <div class="field"><label>Телефон поддержки</label><input type="text" id="supportPhone"></div>
+        <button class="btn btn-save" onclick="saveText()">Сохранить</button>
+      </div>
+    </div>
+
+    <!-- COTTAGES -->
+    <div class="tab-panel" id="panel-cottages">
+      <div class="card">
+        <div class="card-title">Названия и Wi-Fi домиков</div>
+        <div class="card-subtitle">Эти данные отображаются на экране у гостей</div>
+        <div class="cottage-grid" id="cottageGrid"></div>
+        <br>
+        <button class="btn btn-save" onclick="saveCottages()">Сохранить все</button>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="tab-panel" id="panel-preview">
+      <div class="card">
+        <div class="preview-controls">
+          <span style="font-size:14px;color:var(--muted)">Домик:</span>
+          <select id="previewSelect" onchange="updatePreview()">
+            <option value="1">1 — Дом Гармонии</option>
+            <option value="2">2 — Дом Нежности</option>
+            <option value="3">3 — Дом Радости</option>
+            <option value="4">4 — Дом Бодрости</option>
+            <option value="5">5 — Дом Спокойствия</option>
+            <option value="6">6 — Дом Энергии</option>
+          </select>
+          <button class="btn btn-ghost" onclick="refreshPreview()">↻ Обновить</button>
+        </div>
+        <div class="preview-frame">
+          <iframe id="previewFrame" src="/screen/1"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="tab-panel" id="panel-security">
+      <div class="card">
+        <div class="card-title">Смена пароля</div>
+        <div class="field"><label>Текущий пароль</label><input type="password" id="curPass"></div>
+        <div class="field"><label>Новый пароль</label><input type="password" id="newPass"></div>
+        <div class="field"><label>Повторите новый пароль</label><input type="password" id="newPass2"></div>
+        <button class="btn btn-save" onclick="changePassword()">Сменить пароль</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let token = sessionStorage.getItem('adminToken') || '';
+let currentMode = 'video';
+let settings = {};
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginError');
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/admin/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({password: pass}) });
+    if (!r.ok) { err.textContent = 'Неверный пароль'; return; }
+    const d = await r.json();
+    token = d.token;
+    sessionStorage.setItem('adminToken', token);
+    showMain();
+  } catch { err.textContent = 'Ошибка соединения'; }
+}
+
+function logout() {
+  sessionStorage.removeItem('adminToken');
+  token = '';
+  document.getElementById('mainScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function authFetch(url, opts = {}) {
+  opts.headers = {...(opts.headers||{}), 'X-Admin-Token': token};
+  const r = await fetch(url, opts);
+  if (r.status === 401) { logout(); throw new Error('Unauthorized'); }
+  return r;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function showMain() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainScreen').style.display = 'block';
+  await loadSettings();
+  await loadFiles();
+}
+
+async function loadSettings() {
+  const r = await authFetch('/api/admin/settings');
+  settings = await r.json();
+  applySettingsToUI(settings);
+}
+
+function applySettingsToUI(s) {
+  document.getElementById('propName').value     = s.property_name  || '';
+  document.getElementById('greetingText').value = s.greeting_text  || '';
+  document.getElementById('supportPhone').value = s.support_phone  || '';
+  document.getElementById('bgUrlInput').value   = s.background_url || '';
+
+  currentMode = s.background_file ? (s.background_type === 'image' ? 'image' : 'video') : 'url';
+  if (!s.background_file) currentMode = 'url';
+  renderBgPreview(s);
+  buildCottageGrid(s.cottages || {});
+}
+
+function renderBgPreview(s) {
+  const container = document.getElementById('bgPreview');
+  const src = s.background_file ? `/static/uploads/${s.background_file}` : (s.background_url || '');
+  container.innerHTML = '';
+  if (s.background_type === 'image' || (src.match(/\.(jpg|jpeg|png|webp)/i))) {
+    container.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:cover"><div class="bg-label">Изображение</div>`;
+  } else {
+    container.innerHTML = `<video src="${src}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video><div class="bg-label">Видео</div>`;
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── Background ────────────────────────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  ['video','image','url'].forEach(m => {
+    document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1) + 'Btn').classList.toggle('active', m === mode);
+  });
+  document.getElementById('uploadSection').style.display = mode === 'url' ? 'none' : 'block';
+  document.getElementById('urlSection').style.display    = mode === 'url' ? 'block' : 'none';
+  if (mode !== 'url') {
+    document.getElementById('fileInput').accept = mode === 'video' ? 'video/mp4,video/webm' : 'image/jpeg,image/png,image/webp';
+  }
+}
+
+async function uploadFile(file) {
+  if (!file) return;
+  const bar  = document.getElementById('progressBar');
+  const fill = document.getElementById('progressFill');
+  bar.style.display = 'block'; fill.style.width = '0%';
+
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = e => { if (e.lengthComputable) fill.style.width = (e.loaded/e.total*100)+'%'; };
+    await new Promise((res, rej) => {
+      xhr.onload = () => xhr.status < 400 ? res() : rej(xhr.responseText);
+      xhr.onerror = rej;
+      xhr.open('POST', '/api/admin/upload');
+      xhr.setRequestHeader('X-Admin-Token', token);
+      xhr.send(fd);
+    });
+    toast('Файл загружен!', 'ok');
+    await loadSettings();
+    await loadFiles();
+  } catch(e) { toast('Ошибка загрузки', 'err'); }
+  bar.style.display = 'none';
+}
+
+async function saveBgUrl() {
+  const url = document.getElementById('bgUrlInput').value.trim();
+  await authFetch('/api/admin/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({background_url: url, background_file: null, background_type: url.match(/\.(jpg|jpeg|png|webp)/i) ? 'image' : 'video'}) });
+  toast('Фон обновлён', 'ok');
+  await loadSettings();
+}
+
+async function loadFiles() {
+  const r = await authFetch('/api/admin/uploads');
+  const files = await r.json();
+  const list = document.getElementById('filesList');
+  if (!files.length) { list.innerHTML = '<div style="color:var(--muted);font-size:13px">Нет файлов</div>'; return; }
+  const active = settings.background_file;
+  list.innerHTML = files.map(f => `
+    <div class="file-item">
+      ${f.name.match(/\.(jpg|jpeg|png|webp)/i)
+        ? `<img class="file-thumb" src="${f.url}">`
+        : `<video class="file-thumb" src="${f.url}" muted></video>`}
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${(f.size/1024/1024).toFixed(1)} МБ</span>
+      ${f.name === active ? '<span class="file-active">Активен</span>' : `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="setActiveFile('${f.name}')">Выбрать</button>`}
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:12px" onclick="deleteFile('${f.name}')">✕</button>
+    </div>`).join('');
+}
+
+async function setActiveFile(name) {
+  const type = name.match(/\.(jpg|jpeg|png|webp)/i) ? 'image' : 'video';
+  await authFetch('/api/admin/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({background_file: name, background_type: type}) });
+  toast('Фон изменён', 'ok');
+  await loadSettings(); await loadFiles();
+}
+
+async function deleteFile(name) {
+  if (!confirm(`Удалить ${name}?`)) return;
+  await authFetch(`/api/admin/uploads/${name}`, {method:'DELETE'});
+  toast('Файл удалён', 'ok');
+  await loadSettings(); await loadFiles();
+}
+
+// ── Text ──────────────────────────────────────────────────────────────────────
+async function saveText() {
+  await authFetch('/api/admin/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      property_name: document.getElementById('propName').value,
+      greeting_text: document.getElementById('greetingText').value,
+      support_phone: document.getElementById('supportPhone').value,
+    })
+  });
+  toast('Сохранено!', 'ok');
+}
+
+// ── Cottages ──────────────────────────────────────────────────────────────────
+function buildCottageGrid(cottages) {
+  const grid = document.getElementById('cottageGrid');
+  grid.innerHTML = Array.from({length:6}, (_,i) => {
+    const id = String(i+1);
+    const c  = cottages[id] || {};
+    return `
+      <div class="cottage-card">
+        <div class="cottage-header">
+          <div class="cottage-num">${id}</div>
+          <span style="font-size:14px;font-weight:500">${c.name || 'Домик '+id}</span>
+        </div>
+        <div class="cottage-inputs">
+          <div class="field" style="margin:0"><label>Название</label><input id="cname${id}" value="${c.name||''}"></div>
+          <div class="field" style="margin:0"><label>Wi-Fi сеть</label><input id="cwifi${id}" value="${c.wifi_name||''}"></div>
+          <div class="field" style="margin:0"><label>Wi-Fi пароль</label><input id="cpass${id}" value="${c.wifi_pass||''}"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function saveCottages() {
+  const cottages = {};
+  for (let i = 1; i <= 6; i++) {
+    cottages[String(i)] = {
+      name:      document.getElementById('cname'+i).value,
+      wifi_name: document.getElementById('cwifi'+i).value,
+      wifi_pass: document.getElementById('cpass'+i).value,
+    };
+  }
+  await authFetch('/api/admin/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({cottages}) });
+  toast('Домики сохранены!', 'ok');
+  await loadSettings();
+}
+
+// ── Preview ───────────────────────────────────────────────────────────────────
+function updatePreview() {
+  const id = document.getElementById('previewSelect').value;
+  document.getElementById('previewFrame').src = `/screen/${id}`;
+}
+function refreshPreview() {
+  const f = document.getElementById('previewFrame');
+  f.src = f.src;
+}
+
+// ── Password ──────────────────────────────────────────────────────────────────
+async function changePassword() {
+  const cur  = document.getElementById('curPass').value;
+  const np   = document.getElementById('newPass').value;
+  const np2  = document.getElementById('newPass2').value;
+  if (np !== np2) { toast('Пароли не совпадают', 'err'); return; }
+  const r = await authFetch('/api/admin/change-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({current_password: cur, new_password: np}) });
+  if (r.ok) { toast('Пароль изменён!', 'ok'); document.getElementById('curPass').value=''; document.getElementById('newPass').value=''; document.getElementById('newPass2').value=''; }
+  else { const d = await r.json(); toast(d.detail || 'Ошибка', 'err'); }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+if (token) showMain();
+</script>
+</body>
+</html>
